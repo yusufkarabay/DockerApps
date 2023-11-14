@@ -1,20 +1,62 @@
 ﻿using DockerWebApp.Models;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.FileProviders;
+using Microsoft.Extensions.Logging;
+using System;
 using System.Diagnostics;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace DockerWebApp.Controllers
 {
     public class HomeController : Controller
     {
         private readonly ILogger<HomeController> _logger;
-
-        public HomeController(ILogger<HomeController> logger)
+        private readonly IFileProvider _fileProvider;
+        public HomeController(ILogger<HomeController> logger, IFileProvider fileProvider)
         {
             _logger = logger;
+            _fileProvider=fileProvider;
         }
 
         public IActionResult Index()
         {
+            return View();
+        }
+        public IActionResult ImageShow()
+        {
+
+            var images = _fileProvider.GetDirectoryContents("wwwroot/Images").ToList().Select(x => x.
+            Name);
+            return View(images);
+        }
+
+        [HttpPost]
+        public IActionResult ImageShow(string name)
+        {
+            var file = _fileProvider.GetDirectoryContents("wwwroot/Images").ToList().First(x => x.Name==name);
+            System.IO.File.Delete(file.PhysicalPath);
+            return RedirectToAction("ImageShow");
+
+        }
+        public IActionResult ImageSave()
+        {
+            return View();
+        }
+        [HttpPost]
+        public async Task<IActionResult> ImageSave(IFormFile imageFile)
+        {
+            if (imageFile!=null && imageFile.Length>0)
+            {
+                var fileName = Guid.NewGuid().ToString()+Path.GetExtension(imageFile.FileName);
+                var path = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/Images", fileName);
+                using (var stream = new FileStream(path, FileMode.Create))
+                {
+                    await imageFile.CopyToAsync(stream);
+                }
+            }
             return View();
         }
 

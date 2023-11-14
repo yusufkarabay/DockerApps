@@ -1,6 +1,14 @@
+using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.FileProviders;
+using Microsoft.Extensions.Hosting;
+using System.IO;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+IFileProvider fileProvider= new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory()));
+builder.Services.AddSingleton<IFileProvider>(fileProvider);
 builder.Services.AddControllersWithViews();
 
 var app = builder.Build();
